@@ -19,4 +19,4 @@ export class MyApp {
     });
   }
 }
-
+//  private ngUnsubscribe: Subject<any> = new Subject();
