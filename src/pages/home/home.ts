@@ -1,5 +1,8 @@
 import { Component } from '@angular/core';
+import { Camera, CameraOptions } from '@ionic-native/camera';
 import { AlertController, LoadingController, ModalController, NavController, Platform, ToastController } from 'ionic-angular';
+import { Subject } from 'rxjs/Subject';
+import { CepProvider } from '../../providers/cep/cep';
 import { TestePage } from '../teste/teste';
 
 @Component({
@@ -9,14 +12,22 @@ import { TestePage } from '../teste/teste';
 export class HomePage {
   texto: string = '';
   itemsLista = [];
+  private ngUnsubscribe: Subject<any> = new Subject();
   constructor(
     public navCtrl: NavController, 
     public platform: Platform,
     public alertCtrl: AlertController,
     public loaderCtrl: LoadingController,
     public toastCtrl: ToastController,
-    public modalCtrl: ModalController
+    public modalCtrl: ModalController,
+    public cepService: CepProvider,
+    public camera: Camera
     ) {
+  }
+
+  ngOnDestroy() {
+    this.ngUnsubscribe.next();
+    this.ngUnsubscribe.unsubscribe();
   }
 
   abrirPage() {
@@ -31,6 +42,19 @@ export class HomePage {
     let modal = this.modalCtrl.create(TestePage, parametros);
     modal.present();
     modal.onWillDismiss(data => console.log('retorno da modal: ', data))
+  }
+
+  consultarCep() {
+    let loader = this.loaderCtrl.create({content: 'Consultando...'});
+    loader.present();
+    this.cepService.consultaCep('90640000')
+    .subscribe(retorno => {
+      loader.dismiss();
+      console.log('retorno: ', retorno);
+    }, err => {
+      loader.dismiss();
+      console.log('erro ao consultar: ', err)
+    })
   }
 
 
@@ -80,6 +104,24 @@ export class HomePage {
       ]
     });
     alert.present();
+  }
+
+
+  abrirCamera() {
+    const options: CameraOptions = {
+      quality: 100,
+      destinationType: this.camera.DestinationType.DATA_URL,
+      encodingType: this.camera.EncodingType.JPEG,
+      mediaType: this.camera.MediaType.PICTURE
+    };
+
+    this.camera.getPicture(options)
+      .then(image => {
+        let base64Image = 'data:image/jpeg;base64,' + image;
+        console.log(base64Image)
+    })
+      .catch(erro => console.log(erro))
+
   }
 
 
